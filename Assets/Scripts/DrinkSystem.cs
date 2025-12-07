@@ -16,6 +16,8 @@ public class DrinkSystem : MonoBehaviour
     [SerializeField] private float movementDuration;
     [SerializeField] private float rotationSpeed;
     [SerializeField] private float drinkSpeed;
+    [SerializeField] private float shaderBugExtraFill;
+    [SerializeField] private float minFill;
     [SerializeField] private float maxFill;
     [SerializeField] private float maxTilt;
     private InputActionMap inputMap;
@@ -27,6 +29,7 @@ public class DrinkSystem : MonoBehaviour
     private float beerConsumed;
     private float totalBeerConsumed;
     private float extraFillWhileMoving;
+    private float startingFill;
     private float prevLogicalVolume;
 
     private void Awake()
@@ -60,7 +63,10 @@ public class DrinkSystem : MonoBehaviour
                 break;
             case DrinkState.Drinking:
                 if (!shouldDrink)
+                {
+                    beerConsumed = beer.fillAmount + extraFillWhileMoving - startingFill;
                     StartReturning();
+                }
                 break;
             case DrinkState.Returning:
                 break;
@@ -93,7 +99,7 @@ public class DrinkSystem : MonoBehaviour
 
     private void StartReturning()
     {
-        if (state == DrinkState.Drinking || state == DrinkState.Idle) //NON MI CONVINCE
+        if (state == DrinkState.Drinking || state == DrinkState.Idle)
         {
             state = DrinkState.Returning;
             RestartRoutine(ReturnRoutine());
@@ -109,17 +115,16 @@ public class DrinkSystem : MonoBehaviour
 
     private IEnumerator DrinkRoutine()
     {
-        float x = (beer.fillAmount - 0.15f) * -0.0131818181818182f;
-        if (x < -45)
-            x = -45;
-        Quaternion targetRotation = new Quaternion(x, transform.rotation.y, transform.rotation.z, transform.rotation.w); //NON MI CONVINCE
+        float x = (beer.fillAmount - minFill) * -0.0131818181818182f;
+        if (x > -60)
+            x = -60;
+        Quaternion targetRotation = Quaternion.Euler(x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
         beerConsumed = 0f;
         extraFillWhileMoving = 0f;
-        float startFill = beer.fillAmount;
+        startingFill = beer.fillAmount;
         prevLogicalVolume = maxFill - beer.fillAmount;
         float totalDistance = Vector3.Distance(startPos, targetTransform.position);
         float elapsedMovement = 0f;
-        float elapsedDrink = 0f;
 
         while (state == DrinkState.Drinking)
         {
@@ -129,13 +134,13 @@ public class DrinkSystem : MonoBehaviour
                 float t = elapsedMovement / movementDuration;
                 transform.rotation = Quaternion.Lerp(startRot, targetRotation, t);
                 transform.position = Vector3.Lerp(startPos, targetTransform.position, t);
-                beer.fillAmount = Mathf.Lerp(startFill, startFill - 0.45f, t);
-                extraFillWhileMoving = startFill - beer.fillAmount;
+                beer.fillAmount = Mathf.Lerp(startingFill, startingFill - shaderBugExtraFill, t);
+                extraFillWhileMoving = startingFill - beer.fillAmount;
             }
-            else //SONO RIMASTO QUI
+            else
             {
                 float normalizedFill = Mathf.Clamp01(beer.fillAmount / maxFill);
-                float tiltX = Mathf.Lerp(0f, maxTilt, normalizedFill);
+                float tiltX = Mathf.Lerp(x, maxTilt, normalizedFill);
                 Quaternion desiredRot = Quaternion.Euler(
                     tiltX,
                     targetTransform.rotation.eulerAngles.y,
@@ -150,19 +155,12 @@ public class DrinkSystem : MonoBehaviour
                 if (Quaternion.Angle(transform.rotation, desiredRot) < 1f)
                 {
                     float deltaFill = Time.deltaTime * drinkSpeed;
-                    beer.fillAmount = Mathf.Clamp(beer.fillAmount + deltaFill, 0f, maxFill);
-
-                    float newLogicalVolume = maxFill - beer.fillAmount;
-                    float deltaConsumed = prevLogicalVolume - newLogicalVolume;
-                    if (deltaConsumed > 0f)
-                    {
-                        beerConsumed += deltaConsumed;
-                        prevLogicalVolume = newLogicalVolume;
-                    }
+                    beer.fillAmount = Mathf.Clamp(beer.fillAmount + deltaFill, minFill, maxFill);
                 }
 
-                if (beer.fillAmount >= maxFill - 0.45)
+                if (beer.fillAmount >= maxFill - shaderBugExtraFill)
                 {
+                    beerConsumed = beer.fillAmount + extraFillWhileMoving - startingFill;
                     StartReturning();
                     yield break;
                 }
