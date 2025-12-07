@@ -252,10 +252,11 @@ MonoBehaviour:
   handOnGlass: {fileID: 1040273977}
   targetTransform: {fileID: 588610071}
   beer: {fileID: 1801546249}
-  movementSpeed: 3
+  movementSpeed: 2
+  movementDuration: 1
   rotationSpeed: 500
   drinkSpeed: 0.2
-  maxFill: 1.15
+  maxFill: 1.6
   maxTilt: -80
 --- !u!1 &330585543
 GameObject:
