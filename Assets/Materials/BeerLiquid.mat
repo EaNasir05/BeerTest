@@ -72,7 +72,7 @@ Material:
     - Color_E9C3FC1D: {r: 0, g: 0.6946828, b: 0.764151, a: 1}
     - _BottomColor: {r: 0.4113207, g: 0.3306395, b: 0.01784972, a: 1}
     - _Color: {r: 1, g: 0.9009434, b: 0.9009434, a: 1}
-    - _FillAmount: {r: 0, g: 0.031590447, b: 0, a: 0}
+    - _FillAmount: {r: 0, g: 0.144, b: 0, a: 0}
     - _FoamColor: {r: 1, g: 1, b: 1, a: 1}
     - _Rim_Color: {r: 1, g: 0.6666667, b: 0, a: 1}
     - _TopColor: {r: 1, g: 0.97064984, b: 0.7754717, a: 1}

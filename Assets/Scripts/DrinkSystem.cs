@@ -12,14 +12,17 @@ public class DrinkSystem : MonoBehaviour
     [SerializeField] private GameObject handOnGlass;
     [SerializeField] private Transform targetTransform;
     [SerializeField] private Liquid beer;
-    [SerializeField] private float movementSpeed;
+    [SerializeField] private float movementSpeedWhileDrinking;
+    [SerializeField] private float movementSpeedWhileReturning;
     [SerializeField] private float movementDuration;
-    [SerializeField] private float rotationSpeed;
+    [SerializeField] private float rotationSpeedWhileDrinking;
+    [SerializeField] private float rotationSpeedWhileReturning;
     [SerializeField] private float drinkSpeed;
     [SerializeField] private float shaderBugExtraFill;
     [SerializeField] private float minFill;
     [SerializeField] private float maxFill;
     [SerializeField] private float maxTilt;
+    [SerializeField] private float maxHeight;
     private InputActionMap inputMap;
     private InputAction holdN, holdS, holdE, holdW, trigger;
     private DrinkState state = DrinkState.Idle;
@@ -101,6 +104,10 @@ public class DrinkSystem : MonoBehaviour
     {
         if (state == DrinkState.Drinking || state == DrinkState.Idle)
         {
+            if (beer.fillAmount + extraFillWhileMoving >= maxFill)
+            {
+                beer.fillAmount = maxFill + 1;
+            }
             state = DrinkState.Returning;
             RestartRoutine(ReturnRoutine());
         }
@@ -115,10 +122,11 @@ public class DrinkSystem : MonoBehaviour
 
     private IEnumerator DrinkRoutine()
     {
-        float x = (beer.fillAmount - minFill) * -0.0131818181818182f;
-        if (x > -60)
-            x = -60;
-        Quaternion targetRotation = Quaternion.Euler(x, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+        float tRot = Mathf.InverseLerp(minFill, maxFill, beer.fillAmount);
+        float xRot = Mathf.Lerp(-5, maxTilt, tRot);
+        float yPos = Mathf.Lerp(targetTransform.position.y, maxHeight, tRot);
+        Quaternion targetRotation = Quaternion.Euler(xRot, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+        Vector3 targetPosition = new Vector3(targetTransform.position.x, yPos, targetTransform.position.z);
         beerConsumed = 0f;
         extraFillWhileMoving = 0f;
         startingFill = beer.fillAmount;
@@ -133,25 +141,35 @@ public class DrinkSystem : MonoBehaviour
                 elapsedMovement += Time.deltaTime;
                 float t = elapsedMovement / movementDuration;
                 transform.rotation = Quaternion.Lerp(startRot, targetRotation, t);
-                transform.position = Vector3.Lerp(startPos, targetTransform.position, t);
+                transform.position = Vector3.Lerp(startPos, targetPosition, t);
                 beer.fillAmount = Mathf.Lerp(startingFill, startingFill - shaderBugExtraFill, t);
                 extraFillWhileMoving = startingFill - beer.fillAmount;
             }
-            else
+            else //DA CAMBIARE
             {
                 float normalizedFill = Mathf.Clamp01(beer.fillAmount / maxFill);
-                float tiltX = Mathf.Lerp(x, maxTilt, normalizedFill);
+                float tiltX = Mathf.Lerp(xRot, maxTilt, normalizedFill);
+                float heightY = Mathf.Lerp(yPos, maxHeight, normalizedFill);
                 Quaternion desiredRot = Quaternion.Euler(
                     tiltX,
                     targetTransform.rotation.eulerAngles.y,
                     targetTransform.rotation.eulerAngles.z
                 );
+                Vector3 desiredPos = new Vector3(
+                    targetTransform.position.x,
+                    heightY,
+                    targetTransform.position.z
+                );
                 transform.rotation = Quaternion.RotateTowards(
                     transform.rotation,
                     desiredRot,
-                    rotationSpeed * Time.deltaTime
+                    rotationSpeedWhileDrinking * Time.deltaTime
                 );
-
+                transform.position = Vector3.MoveTowards(
+                    transform.position,
+                    desiredPos,
+                    movementSpeedWhileDrinking * Time.deltaTime
+                );
                 if (Quaternion.Angle(transform.rotation, desiredRot) < 1f)
                 {
                     float deltaFill = Time.deltaTime * drinkSpeed;
@@ -183,33 +201,31 @@ public class DrinkSystem : MonoBehaviour
             transform.position = Vector3.MoveTowards(
                 transform.position,
                 startPos,
-                movementSpeed * Time.deltaTime
+                movementSpeedWhileReturning * Time.deltaTime
             );
 
             float currentDistance = Vector3.Distance(transform.position, returnStartPos);
             float t = Mathf.Clamp01(currentDistance / totalDistance);
 
-            float currentExtra = Mathf.Lerp(startExtra, 0f, t);
-            beer.fillAmount = Mathf.Clamp(baseFill + currentExtra, 0f, maxFill);
-            extraFillWhileMoving = currentExtra;
+            if (baseFill < maxFill)
+            {
+                float currentExtra = Mathf.Lerp(startExtra, 0f, t);
+                beer.fillAmount = Mathf.Clamp(baseFill + currentExtra, 0f, maxFill);
+                extraFillWhileMoving = currentExtra;
+            }
 
             transform.rotation = Quaternion.RotateTowards(
                 transform.rotation,
                 startRot,
-                rotationSpeed * Time.deltaTime
+                rotationSpeedWhileReturning * Time.deltaTime
             );
 
             if (transform.position == startPos && transform.rotation == startRot)
             {
                 beer.fillAmount = baseFill;
-                if (beer.fillAmount > maxFill)
-                {
-                    beer.fillAmount = maxFill;
-                }
                 extraFillWhileMoving = 0f;
                 totalBeerConsumed += beerConsumed;
                 state = DrinkState.Idle;
-
                 Debug.Log("BEVUTO ORA: " + beerConsumed);
                 Debug.Log("TOTALE BEVUTO: " + totalBeerConsumed);
                 yield break;
