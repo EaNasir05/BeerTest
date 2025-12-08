@@ -1,7 +1,9 @@
 ﻿using System.Collections;
+using TMPro;
 using Unity.Burst.Intrinsics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal;
 
 enum DrinkState { Idle, Drinking, Returning }
 
@@ -12,10 +14,8 @@ public class DrinkSystem : MonoBehaviour
     [SerializeField] private GameObject handOnGlass;
     [SerializeField] private Transform targetTransform;
     [SerializeField] private Liquid beer;
-    [SerializeField] private float movementSpeedWhileDrinking;
     [SerializeField] private float movementSpeedWhileReturning;
-    [SerializeField] private float movementDuration;
-    [SerializeField] private float rotationSpeedWhileDrinking;
+    [SerializeField] private float movementDurationBeforeDrinking;
     [SerializeField] private float rotationSpeedWhileReturning;
     [SerializeField] private float drinkDuration;
     [SerializeField] private float shaderBugExtraFill;
@@ -23,8 +23,9 @@ public class DrinkSystem : MonoBehaviour
     [SerializeField] private float maxFill;
     [SerializeField] private float maxTilt;
     [SerializeField] private float maxHeight;
+    [SerializeField] private float beerLossDuration;
     private InputActionMap inputMap;
-    private InputAction holdN, holdS, holdE, holdW, trigger;
+    private InputAction holdN, holdS, holdE, holdW, trigger, collisionTest;
     private DrinkState state = DrinkState.Idle;
     private Vector3 startPos;
     private Quaternion startRot;
@@ -33,6 +34,7 @@ public class DrinkSystem : MonoBehaviour
     private float totalBeerConsumed;
     private float extraFillWhileMoving;
     private float startingFill;
+    private bool iHateNiggers;
 
     private void Awake()
     {
@@ -44,9 +46,11 @@ public class DrinkSystem : MonoBehaviour
         holdE = inputMap.FindAction("Hold E");
         holdW = inputMap.FindAction("Hold W");
         trigger = inputMap.FindAction("Drink");
+        collisionTest = inputMap.FindAction("Jump");
         totalBeerConsumed = 0;
         startPos = transform.position;
         startRot = transform.rotation;
+        iHateNiggers = false;
     }
 
     private void OnEnable() => inputMap.Enable();
@@ -75,6 +79,10 @@ public class DrinkSystem : MonoBehaviour
         }
         UpdateHands(fourButtons);
         UpdateWobble();
+        if (collisionTest.WasPressedThisFrame())
+        {
+            StartCoroutine(GainBeer(0.2f));
+        }
     }
 
     private void UpdateHands(bool fourButtons)
@@ -106,6 +114,7 @@ public class DrinkSystem : MonoBehaviour
             if (beer.fillAmount + extraFillWhileMoving >= maxFill)
             {
                 beer.fillAmount = maxFill + 1;
+                iHateNiggers = true;
             }
             state = DrinkState.Returning;
             RestartRoutine(ReturnRoutine());
@@ -117,6 +126,54 @@ public class DrinkSystem : MonoBehaviour
         if (routine != null)
             StopCoroutine(routine);
         routine = StartCoroutine(newRoutine);
+    }
+
+    private IEnumerator LoseBeer(float fillGain)
+    {
+        StartCoroutine(SimulateCarCollision());
+        //spawna palline
+        float elapsed = 0f;
+        float previousFill = 0f;
+        while (elapsed < beerLossDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / beerLossDuration);
+            float currentFill = fillGain * t;
+            float increment = currentFill - previousFill;
+            if (beer.fillAmount + increment > maxFill)
+            {
+                increment = maxFill - beer.fillAmount;
+            }
+            beer.fillAmount += increment;
+            previousFill = currentFill;
+            yield return null;
+        }
+    }
+
+    private IEnumerator SimulateCarCollision()
+    {
+        //alza e abbassa il calice e la camera
+        yield return null;
+    }
+
+    private IEnumerator GainBeer(float fillLoss)
+    {
+        float elapsed = 0f;
+        float previousFill = 0f;
+        while (elapsed < beerLossDuration)
+        {
+            elapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsed / beerLossDuration);
+            float currentFill = fillLoss * t;
+            float decrement = currentFill - previousFill;
+            if (beer.fillAmount - decrement < minFill)
+            {
+                decrement = minFill + beer.fillAmount;
+            }
+            beer.fillAmount -= decrement;
+            previousFill = currentFill;
+            yield return null;
+        }
     }
 
     private IEnumerator DrinkRoutine()
@@ -137,10 +194,10 @@ public class DrinkSystem : MonoBehaviour
         float realDrinkDuration = (beer.fillAmount - maxFill) * -1 * drinkDuration;
         while (state == DrinkState.Drinking)
         {
-            if (elapsedMovement < movementDuration)
+            if (elapsedMovement < movementDurationBeforeDrinking)
             {
                 elapsedMovement += Time.deltaTime;
-                float t = elapsedMovement / movementDuration;
+                float t = elapsedMovement / movementDurationBeforeDrinking;
                 transform.rotation = Quaternion.Lerp(startRot, targetRotation, t);
                 transform.position = Vector3.Lerp(startPos, targetPosition, t);
                 beer.fillAmount = Mathf.Lerp(startingFill, startingFill - shaderBugExtraFill, t);
@@ -200,7 +257,15 @@ public class DrinkSystem : MonoBehaviour
 
             if (transform.position == startPos && transform.rotation == startRot)
             {
-                beer.fillAmount = baseFill;
+                if (iHateNiggers)
+                {
+                    beer.fillAmount -= 1;
+                    iHateNiggers = false;
+                }
+                else
+                {
+                    beer.fillAmount = baseFill;
+                }
                 extraFillWhileMoving = 0f;
                 totalBeerConsumed += beerConsumed;
                 state = DrinkState.Idle;

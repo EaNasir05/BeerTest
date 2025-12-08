@@ -420,17 +420,16 @@ MonoBehaviour:
   handOnGlass: {fileID: 1673870080}
   targetTransform: {fileID: 588610071}
   beer: {fileID: 1523034213}
-  movementSpeedWhileDrinking: 8
   movementSpeedWhileReturning: 2
-  movementDuration: 1
-  rotationSpeedWhileDrinking: 1166.66
-  rotationSpeedWhileReturning: 40
+  movementDurationBeforeDrinking: 1
+  rotationSpeedWhileReturning: 60
   drinkDuration: 3
   shaderBugExtraFill: 0.4
   minFill: 0
   maxFill: 1.4
   maxTilt: -100
   maxHeight: 0.9
+  beerLossDuration: 0.5
 --- !u!136 &417043028
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -518,14 +517,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 417043026}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.67, y: 0.03, z: -6.58}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 2.57877, y: 5.40811, z: -16.51202}
   m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1523034212}
   - {fileID: 1673870081}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 719305721}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &588610070
 GameObject:
@@ -551,14 +550,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 588610070}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.42261827, y: 0, z: 0, w: 0.9063079}
-  m_LocalPosition: {x: 0.25, y: 0, z: -7.88}
+  m_LocalRotation: {x: -0.42261827, y: -0, z: -0, w: 0.9063079}
+  m_LocalPosition: {x: 1.1587701, y: 5.37811, z: -17.81202}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 719305721}
   m_LocalEulerAnglesHint: {x: -50, y: 0, z: 0}
---- !u!1 &765737655
+--- !u!1 &719305720
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -566,27 +565,30 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 765737656}
+  - component: {fileID: 719305721}
   m_Layer: 0
-  m_Name: SIUM
+  m_Name: Car
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &765737656
+--- !u!4 &719305721
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 765737655}
+  m_GameObject: {fileID: 719305720}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.67, y: 0.03, z: -6.58}
+  m_LocalPosition: {x: -0.90877, y: -5.37811, z: 9.93202}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 588610071}
+  - {fileID: 870987389}
+  - {fileID: 417043031}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &832575517
@@ -744,14 +746,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 870987385}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.75, y: 0, z: -6.88}
-  m_LocalScale: {x: 1.5, y: 0.1, z: 1.5}
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0.15877002, y: 5.37811, z: -16.81202}
+  m_LocalScale: {x: 1.5, y: 0.10000001, z: 1.5000001}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2100537045}
   - {fileID: 1836869226}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 719305721}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
 --- !u!1 &1523034211
 GameObject:
@@ -803,7 +805,7 @@ MonoBehaviour:
   updateMode: 0
   MaxWobble: 0.05
   WobbleSpeedMove: 2
-  fillAmount: 0
+  fillAmount: 1.4
   Recovery: 1
   Thickness: 4
   CompensateShapeAmount: 0.2
@@ -1308,7 +1310,4 @@ SceneRoots:
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 1540943412}
-  - {fileID: 588610071}
-  - {fileID: 870987389}
-  - {fileID: 417043031}
-  - {fileID: 765737656}
+  - {fileID: 719305721}
