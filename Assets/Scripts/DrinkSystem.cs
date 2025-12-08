@@ -17,7 +17,7 @@ public class DrinkSystem : MonoBehaviour
     [SerializeField] private float movementDuration;
     [SerializeField] private float rotationSpeedWhileDrinking;
     [SerializeField] private float rotationSpeedWhileReturning;
-    [SerializeField] private float drinkSpeed;
+    [SerializeField] private float drinkDuration;
     [SerializeField] private float shaderBugExtraFill;
     [SerializeField] private float minFill;
     [SerializeField] private float maxFill;
@@ -33,7 +33,6 @@ public class DrinkSystem : MonoBehaviour
     private float totalBeerConsumed;
     private float extraFillWhileMoving;
     private float startingFill;
-    private float prevLogicalVolume;
 
     private void Awake()
     {
@@ -88,7 +87,7 @@ public class DrinkSystem : MonoBehaviour
     private void UpdateWobble()
     {
         bool stable = state == DrinkState.Drinking || state == DrinkState.Returning;
-        beer.MaxWobble = stable ? 0.001f : 0.05f;
+        beer.MaxWobble = stable ? 0.01f : 0.05f;
     }
 
     private void StartDrinking()
@@ -127,13 +126,15 @@ public class DrinkSystem : MonoBehaviour
         float yPos = Mathf.Lerp(targetTransform.position.y, maxHeight, tRot);
         Quaternion targetRotation = Quaternion.Euler(xRot, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
         Vector3 targetPosition = new Vector3(targetTransform.position.x, yPos, targetTransform.position.z);
+        Quaternion maxRotation = Quaternion.Euler(maxTilt, transform.rotation.eulerAngles.y, transform.rotation.eulerAngles.z);
+        Vector3 maxPosition = new Vector3(targetTransform.position.x, maxHeight, targetTransform.position.z);
         beerConsumed = 0f;
         extraFillWhileMoving = 0f;
         startingFill = beer.fillAmount;
-        prevLogicalVolume = maxFill - beer.fillAmount;
         float totalDistance = Vector3.Distance(startPos, targetTransform.position);
         float elapsedMovement = 0f;
-
+        float elapsedDrinking = 0f;
+        float realDrinkDuration = (beer.fillAmount - maxFill) * -1 * drinkDuration;
         while (state == DrinkState.Drinking)
         {
             if (elapsedMovement < movementDuration)
@@ -145,36 +146,13 @@ public class DrinkSystem : MonoBehaviour
                 beer.fillAmount = Mathf.Lerp(startingFill, startingFill - shaderBugExtraFill, t);
                 extraFillWhileMoving = startingFill - beer.fillAmount;
             }
-            else //DA CAMBIARE
+            else
             {
-                float normalizedFill = Mathf.Clamp01(beer.fillAmount / maxFill);
-                float tiltX = Mathf.Lerp(xRot, maxTilt, normalizedFill);
-                float heightY = Mathf.Lerp(yPos, maxHeight, normalizedFill);
-                Quaternion desiredRot = Quaternion.Euler(
-                    tiltX,
-                    targetTransform.rotation.eulerAngles.y,
-                    targetTransform.rotation.eulerAngles.z
-                );
-                Vector3 desiredPos = new Vector3(
-                    targetTransform.position.x,
-                    heightY,
-                    targetTransform.position.z
-                );
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    desiredRot,
-                    rotationSpeedWhileDrinking * Time.deltaTime
-                );
-                transform.position = Vector3.MoveTowards(
-                    transform.position,
-                    desiredPos,
-                    movementSpeedWhileDrinking * Time.deltaTime
-                );
-                if (Quaternion.Angle(transform.rotation, desiredRot) < 1f)
-                {
-                    float deltaFill = Time.deltaTime * drinkSpeed;
-                    beer.fillAmount = Mathf.Clamp(beer.fillAmount + deltaFill, minFill, maxFill);
-                }
+                elapsedDrinking += Time.deltaTime;
+                float t = elapsedDrinking / realDrinkDuration;
+                transform.rotation = Quaternion.Lerp(targetRotation, maxRotation, t);
+                transform.position = Vector3.Lerp(targetPosition, maxPosition, t);
+                beer.fillAmount = Mathf.Lerp(startingFill, maxFill - shaderBugExtraFill, t);
 
                 if (beer.fillAmount >= maxFill - shaderBugExtraFill)
                 {

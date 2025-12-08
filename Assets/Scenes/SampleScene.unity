@@ -425,8 +425,8 @@ MonoBehaviour:
   movementDuration: 1
   rotationSpeedWhileDrinking: 1166.66
   rotationSpeedWhileReturning: 40
-  drinkSpeed: 0.3
-  shaderBugExtraFill: 0.6
+  drinkDuration: 3
+  shaderBugExtraFill: 0.4
   minFill: 0
   maxFill: 1.4
   maxTilt: -100
@@ -826,7 +826,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 2
   m_Radius: 0.5000001
   m_Height: 2
