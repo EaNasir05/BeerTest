@@ -422,6 +422,7 @@ MonoBehaviour:
   beer: {fileID: 1523034213}
   movementSpeedWhileReturning: 2
   movementDurationBeforeDrinking: 1
+  returnDuration: 1
   rotationSpeedWhileReturning: 60
   drinkDuration: 3
   shaderBugExtraFill: 0.4
